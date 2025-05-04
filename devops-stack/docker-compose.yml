@@ -118,5 +118,3 @@ volumes:
   grafana_data:
   elastic_data:
   nexus-data:
-  ./playbooks:
-  ./erraform:
