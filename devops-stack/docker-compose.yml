@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    hostname: gitlab
+    container_name: gitlab
+    ports:
+      - "8080:80"
+      - "2222:22"
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
+  argocd:
+    image: argoproj/argocd
+    container_name: argocd
+    ports:
+      - "8082:8080"
+
+  sonarqube:
+    image: sonarqube:lts
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: devops
+      POSTGRES_PASSWORD: devops
+      POSTGRES_DB: devops_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: kibana
+    ports:
+      - "5601:5601"
+
+  fluentd:
+    image: fluent/fluentd:v1.14-1
+    container_name: fluentd
+    volumes:
+      - ./fluentd:/fluentd/etc
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+
+  nexus:
+    image: sonatype/nexus3
+    container_name: nexus
+    ports:
+      - "8083:8081"
+    volumes:
+      - nexus-data:/nexus-data
+  devops-cli:
+    build: ./devops-cli
+    container_name: devops-cli
+    volumes:
+      - ./playbooks:/playbooks
+      - ./terraform:/terraform
+    stdin_open: true
+    tty: true
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_extensions:
+  postgres_data:
+  grafana_data:
+  elastic_data:
+  nexus-data:
+  ./playbooks:
+  ./erraform:
